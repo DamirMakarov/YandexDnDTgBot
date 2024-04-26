@@ -15,35 +15,6 @@ def randomch():
     return str(num)
 
 
-@bot.message_handler(content_types=['photo'])
-def handle_docs_photo(message):
-    global src
-    file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
-    downloaded_file = bot.download_file(file_info.file_path)
-    src = 'files/' + file_info.file_path
-    with open(src, 'wb') as new_file:
-        new_file.write(downloaded_file)
-
-    bot.reply_to(message, "Фото загружено, Укажите пароль")
-    bot.register_next_step_handler(message, save_file_func)
-
-
-def save_file_func(message):
-    back = cur.execute("""SELECT * FROM passwords""", ).fetchall()
-    password = message.text
-    print(back)
-    flag = True
-    for el in back:
-        if el[1] == password:
-            flag = False
-    if flag:
-        with con:
-            cur.execute('INSERT INTO passwords(password, filename)'
-                        ' VALUES(?, ?)'
-                        , (message.text, src))
-        bot.send_message(message.from_user.id, f"Фото сохранено под паролем, по адресу {src}")
-    else:
-        bot.send_message(message.from_user.id, "такой пароль уже есть")
 
 
 @bot.message_handler(content_types=['text'])
@@ -56,17 +27,13 @@ def start(message):
                                                "/roll20 - бросок 20 с бонусом или без\n"
                                                "/rollChara - генерирует только характеристики персонажа\n"
                                                "/StalkerShots - выстрел очередью по системе сталкера\n"
-                                               "/RollPersonalItems - Рандомные личные предметы \n "
-                                               "/MyPhoto - достать сохраненное под паролем фото,\n"
-                                               "чтобы сохранить фото отправьте его боту")
+                                               "/RollPersonalItems - Рандомные личные предметы")
     elif message.text == '/help':
         bot.send_message(message.from_user.id, "Список доступных команд:\n/generate - генерирует персонажа\n"
                                                "/roll20 - бросок 20 с бонусом или без\n"
                                                "/rollChara - генерирует только характеристики персонажа\n"
                                                "/StalkerShots - выстрел очередью по системе сталкера\n"
-                                               "/RollPersonalItems - Рандомные личные предметы\n "
-                                               "/MyPhoto достать сохраненное под паролем фото,\n"
-                                               "чтобы сохранить фото отправьте его боту")
+                                               "/RollPersonalItems - Рандомные личные предметы")
     elif message.text == '/roll20':
         bot.send_message(message.from_user.id, "Укажите бонус (Только число)")
         bot.register_next_step_handler(message, roll_dice)
@@ -81,58 +48,33 @@ def start(message):
     elif message.text == '/RollPersonalItems':
         bot.send_message(message.from_user.id, "Укажите количество предметов (Только число)")
         bot.register_next_step_handler(message, print_personal_items)
-    elif message.text == '/MyPhoto':
-        bot.send_message(message.from_user.id, "Введите пароль")
-        bot.register_next_step_handler(message, pers_photo)
-
     else:
         bot.send_message(message.from_user.id, "Беринг чмо! Некорректный ввод, /help список доступных команд")
 
-def pers_photo(message):
-    back = cur.execute("""SELECT * FROM passwords""", ).fetchall()
-    password = message.text
-    print(back)
-    flag = True
-    for el in back:
-        if el[1] == password:
-            flag = False
-            print(True)
-            try:
-                with open(el[2], "rb") as f:
-                    bot.send_photo(message.chat.id, f)
-            except Exception:
-                bot.send_message(message.from_user.id,
-                                 'Файл отсутвует в памяти')
-    if flag:
-        bot.send_message(message.from_user.id,'Фото с таким паролем не существует')
 
 def print_personal_items(message):
-    try:
-        rolls = message.text
-        stroka = ''
-        summa_weight = 0
-        summa_volume = 0
-        for i in range(int(rolls)):
-            items_list = roll_item()
-            print(items_list)
-            stroka += f'Предмет: {items_list[1]} Вес: {items_list[2]} Объем: {items_list[3]} \n'
-            print(items_list[2].split())
-            summa_weight += float(items_list[2].split()[0])
-            summa_volume += float(items_list[2].split()[0])
-        print(stroka)
-        text = stroka.split(maxsplit=1)[1]
-        print(text)
-        if len(text) > 4096:
-            for x in range(0, len(text), 4096):
-                bot.send_message(message.chat.id, '{}'.format(text[x:x + 4096]))
-                print(x)
-        else:
-            bot.send_message(message.from_user.id, stroka)
-        bot.send_message(message.from_user.id, f'Суммарный вес: {summa_weight} кг Cуммарный Объем: {summa_volume} кг')
-        print(summa_weight)
-    except Exception:
-        bot.send_message(message.from_user.id, 'Ошибка, введите еще раз, пожалуйста, попробуйте ввести только число без дополнительных знаков')
-
+    rolls = message.text
+    stroka = ''
+    summa_weight = 0
+    summa_volume = 0
+    for i in range(int(rolls)):
+        items_list = roll_item()
+        print(items_list)
+        stroka += f'Предмет: {items_list[1]} Вес: {items_list[2]} Объем: {items_list[3]} \n'
+        print(items_list[2].split())
+        summa_weight += float(items_list[2].split()[0])
+        summa_volume += float(items_list[2].split()[0])
+    print(stroka)
+    text = stroka.split(maxsplit=1)[1]
+    print(text)
+    if len(text) > 4096:
+        for x in range(0, len(text), 4096):
+            bot.send_message(message.chat.id, '{}'.format(text[x:x + 4096]))
+            print(x)
+    else:
+        bot.send_message(message.from_user.id, stroka)
+    bot.send_message(message.from_user.id, f'Суммарный вес: {summa_weight} кг Cуммарный Объем: {summa_volume} кг')
+    print(summa_weight)
 def print_ch(message):
     ch = Character()
     ch.generate()
