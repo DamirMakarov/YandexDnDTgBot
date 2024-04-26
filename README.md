@@ -15,3 +15,4 @@ ___
 + Установите Библиотеку из requirments.txt
 + Запустите файл server.py
 + Перейдите по адресу https://t.me/DnD_generator_bot
++ Добавьте в файл проекта папку files/photos
