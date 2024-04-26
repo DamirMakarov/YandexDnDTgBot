@@ -14,3 +14,4 @@ ___
 + Распакуйте Архив
 + Установите Библиотеку из requirments.txt
 + Запустите файл server.py
++ Перейдите по адресу https://t.me/DnD_generator_bot
